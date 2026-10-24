@@ -1,18 +1,34 @@
 {
-  "buildCommand": "bash scripts/build.sh",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist/vercel",
-  "framework": null,
+  "framework": "vite",
   "cleanUrls": true,
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store, max-age=0" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Referrer-Policy", "value": "no-referrer" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://qedlkndcfzyqvintkvud.supabase.co; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store, max-age=0"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://qedlkndcfzyqvintkvud.supabase.co; form-action 'self'; base-uri 'none'; frame-ancestors 'none'; object-src 'none'"
+        }
       ]
     }
-  ]
+  ],
+  "installCommand": "npm ci"
 }

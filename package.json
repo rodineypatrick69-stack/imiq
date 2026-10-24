@@ -1,0 +1,41 @@
+{
+  "name": "imiq",
+  "version": "22.0.0",
+  "description": "Painel responsivo de equipes TM, TT e TN. O estado compartilhado (equipe, escalas, folgas, ausências e diários) é persistido no Supabase independente `imiq`; não usa o projeto HPE.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "npm run typecheck && npm test && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rodineypatrick69-stack/imiq.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/rodineypatrick69-stack/imiq/issues"
+  },
+  "homepage": "https://github.com/rodineypatrick69-stack/imiq#readme",
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "lucide-react": "1.61.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "prettier": "3.9.10",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  },
+  "private": true
+}

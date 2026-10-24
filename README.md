@@ -1,27 +1,49 @@
-# Painel do Supervisor de Equipe
+# IMIQ — Controle pessoal
 
-Painel responsivo de equipes TM, TT e TN. O estado compartilhado (equipe, escalas, folgas, ausências e diários) é persistido no Supabase independente `imiq`; não usa o projeto HPE.
+Versão 22 · 24/10/2026. Aplicação de supervisão das equipes TM, TT e TN, com login, escalas, diário operacional, cadastro de funcionários, folgas e ausências.
 
-## Stack e segurança
+## Interface e arquitetura
 
-- Supabase Postgres: estrutura normalizada, estado do painel, auditoria e controle de tentativas.
-- Supabase Auth: sessão de usuário do painel, iniciada por função Edge `supervisor-login`.
-- RLS: leitura/gravação do estado somente para perfis ativos; credenciais e limites ficam reservados ao `service_role`.
-- Vercel: build estático em `dist/vercel`; o pacote publicado não inclui dados iniciais ou arquivos de funcionários.
+- React + TypeScript em modo estrito; componentes reutilizáveis para botões, indicadores, campos, painéis e modais.
+- Vite para desenvolvimento e build de produção; dependências fixadas e lockfile versionado.
+- Ícones Lucide e fonte Inter hospedada no próprio build.
+- Sistema visual roxo, preto, branco e laranja; menu lateral adaptável, tabelas com rolagem no celular, navegação por teclado e respeito a movimento reduzido.
+- Busca de funcionários por nome, registro ou número pessoal; cadastro e edição em formulários acessíveis.
 
-O login usa usuário e PIN curto conforme solicitado pelo supervisor. O PIN é validado no servidor usando PBKDF2-SHA-256 e há bloqueio temporário após cinco tentativas inválidas. Não salve PINs no repositório nem em variáveis do Vercel.
+## Dados e acesso
 
-## Desenvolvimento e build
+O IMIQ usa exclusivamente o projeto Supabase `qedlkndcfzyqvintkvud`, separado do HPE. Esta atualização não altera o esquema, os usuários nem as credenciais existentes.
+
+O login envia usuário e PIN à função Edge `supervisor-login`. Ela valida o PIN no servidor, limita tentativas e devolve uma sessão Supabase Auth. O frontend contém somente a chave pública publicável. Nenhum PIN, token de sessão ou chave de serviço deve ser salvo no Git.
+
+`src/lib/api.ts` preserva o contrato REST existente. Leituras e gravações usam o token do usuário e as políticas RLS do banco. `workspace_states` permanece a fonte de verdade, com atualização condicionada à revisão para impedir sobrescritas concorrentes. A fila de gravação confirma cada revisão retornada pelo servidor; alterações feitas durante uma gravação entram na sequência. Em caso de erro, é possível tentar novamente e baixar backup. Conflitos interrompem a edição até a recarga explícita da nuvem. A consulta periódica ocorre a cada 15 segundos e não interrompe campos em edição.
+
+A cópia local é apenas uma recuperação auxiliar. O indicador “Sincronizado” aparece depois da confirmação do servidor. Os dados reais não fazem parte do build. Os testes usam apenas dados fictícios.
+
+## Desenvolvimento e validação
+
+Requer Node 22.12+ ou 24.
 
 ```sh
-bash scripts/build.sh
-node scripts/test-build.mjs
+npm ci
+npm run dev
+npm run typecheck
+npm test
+npm run build
 ```
 
-O HTML usa apenas a chave pública Supabase (`sb_publishable_…`), que pode estar no cliente. A chave `service_role` permanece exclusiva no ambiente Supabase e nunca deve ser colocada no código ou no Vercel. A função Edge usa os segredos padrão do Supabase.
+O build executa a verificação de tipos, os testes e a compilação. Os testes cobrem regras de cobertura, ausências, liderança, folgas, transferência com preservação do histórico, proteção de revisão, sessão e renovação de token.
 
-## Deploy
+- `src/components/`: componentes básicos e login.
+- `src/pages/`: cinco telas de operação.
+- `src/lib/domain.ts`: regras da escala e exportação CSV.
+- `src/lib/useWorkspace.ts`: estado compartilhado e sincronização.
+- `src/styles.css`: tokens, componentes e regras responsivas.
+- `supabase/`: função e migrações já existentes, mantidas.
+- `app/version.json`: versão da aplicação.
 
-O projeto Vercel `imiq` está ligado ao branch `main` do GitHub. Cada commit dispara o build configurado no `vercel.json`. Para manter outro projeto Supabase isolado, atualize o endereço/chave pública no app e faça o deploy da função e das migrações no projeto apropriado; nunca reutilize as credenciais do HPE.
+## Publicação
 
-As migrações versionam o esquema e as políticas; os dados operacionais são inseridos no banco privado, não no Git.
+O projeto Vercel `imiq` (`prj_sawOmoyZL7qUqvoYzL9UXeTxsily`) acompanha `main` de `rodineypatrick69-stack/imiq`. Cada atualização nessa branch dispara o deploy automático. `vercel.json` configura `npm ci`, o build Vite, saída `dist/vercel`, política de conteúdo e cabeçalhos de segurança.
+
+O HTML antigo e o worker legado foram substituídos pela aplicação React nesta versão. Esta publicação é destinada ao Vercel; o endereço antigo de Sites tem publicação independente. Para reverter, restaure o commit anterior no GitHub e deixe o Vercel reconstruir. Não apague o banco ou seus dados.

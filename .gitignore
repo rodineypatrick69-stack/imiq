@@ -4,3 +4,6 @@ node_modules/
 .env.*
 !.env.example
 .DS_Store
+qa.html
+qa-mobile.html
+qa.tsx
