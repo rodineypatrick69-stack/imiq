@@ -10,19 +10,27 @@ import {
   offData,
   actingLeader,
   scheduleFor,
+  restNumberForDate,
+  assignRestNumber,
 } from "../src/lib/domain";
 import type { Workspace } from "../src/lib/types";
 const fixture = (): Workspace => ({
+  teamLeaders: {
+    TM: ["Alpha", "Bravo"],
+    TT: ["Hotel", "India"],
+    TN: ["Kilo"],
+  },
+  leaderRotation: { TN: ["Lima", "Mike"] },
   teams: {
-    TM: ["Gleiton", "Ana", "Bruno", "Carla", "Davi", "Eva"],
-    TT: ["Rithielle", "Felipe"],
-    TN: ["Charles", "Rodiney", "Iorran", "Gabriel"],
+    TM: ["Alpha", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"],
+    TT: ["Hotel", "India"],
+    TN: ["Kilo", "Lima", "Mike", "November"],
   },
   schedule: {
     "2026-10-24": {
-      TM: ["Gleiton", "Ana", "Bruno", "Carla", "Davi", "Eva"],
-      TT: ["Rithielle", "Felipe"],
-      TN: ["Charles", "Rodiney", "Iorran", "Gabriel"],
+      TM: ["Alpha", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"],
+      TT: ["Hotel", "India"],
+      TN: ["Kilo", "Lima", "Mike", "November"],
     },
   },
   journals: {},
@@ -32,19 +40,19 @@ const fixture = (): Workspace => ({
 test("coverage excludes absence and journal nonattendance while rests remain separate", () => {
   const a = fixture();
   a.absences.push({
-    name: "Ana",
+    name: "Charlie",
     start: "2026-10-24",
     end: "2026-10-25",
     reason: "Férias",
   });
   a.journals["2026-10-24"] = {
-    rows: [{ team: "TM", name: "Bruno", status: "Falta", note: "" }],
+    rows: [{ team: "TM", name: "Delta", status: "Falta", note: "" }],
   };
   assert.deepEqual(teamData(a, "TM", "2026-10-24").available, [
-    "Gleiton",
-    "Carla",
-    "Davi",
-    "Eva",
+    "Alpha",
+    "Echo",
+    "Foxtrot",
+    "Golf",
   ]);
   assert.deepEqual(restForTeam(a, "TM", "2026-10-24"), []);
 });
@@ -54,70 +62,94 @@ test("suggestions never transfer leaders and preserve the donor minimum", () => 
   assert.equal(p.gaps, 0);
   assert.ok(
     p.transfers.every(
-      (t) => t.name !== "Gleiton" && t.from === "TM" && t.to === "TT",
+      (t) => t.name !== "Alpha" && t.from === "TM" && t.to === "TT",
     ),
   );
 });
 test("moving a person preserves history and updates future schedule and journals", () => {
   const a = fixture();
-  a.schedule["2026-10-23"] = { TM: ["Ana"] };
+  a.schedule["2026-10-23"] = { TM: ["Charlie"] };
   a.journals["2026-10-24"] = {
-    rows: [{ name: "Ana", team: "TM", status: "Presente", note: "" }],
+    rows: [{ name: "Charlie", team: "TM", status: "Presente", note: "" }],
   };
-  movePerson(a, "TM", "Ana", "TT", "2026-10-24");
-  assert.deepEqual(a.schedule["2026-10-23"].TM, ["Ana"]);
-  assert.ok(!a.schedule["2026-10-24"].TM?.includes("Ana"));
-  assert.ok(a.schedule["2026-10-24"].TT?.includes("Ana"));
+  movePerson(a, "TM", "Charlie", "TT", "2026-10-24");
+  assert.deepEqual(a.schedule["2026-10-23"].TM, ["Charlie"]);
+  assert.ok(!a.schedule["2026-10-24"].TM?.includes("Charlie"));
+  assert.ok(a.schedule["2026-10-24"].TT?.includes("Charlie"));
   assert.equal(a.journals["2026-10-24"].rows[0].team, "TT");
 });
 test("removal preserves earlier records and removes future absences", () => {
   const a = fixture();
-  a.schedule["2026-10-23"] = { TM: ["Ana"] };
-  a.absences = [{ name: "Ana", start: "2026-10-25", end: "2026-10-26" }];
-  removePerson(a, "TM", "Ana", "2026-10-24");
-  assert.deepEqual(a.schedule["2026-10-23"].TM, ["Ana"]);
-  assert.ok(!a.teams.TM.includes("Ana"));
+  a.employeeRestNumbers = { "Charlie": 2 };
+  a.schedule["2026-10-23"] = { TM: ["Charlie"] };
+  a.absences = [{ name: "Charlie", start: "2026-10-25", end: "2026-10-26" }];
+  removePerson(a, "TM", "Charlie", "2026-10-24");
+  assert.deepEqual(a.schedule["2026-10-23"].TM, ["Charlie"]);
+  assert.ok(!a.teams.TM.includes("Charlie"));
   assert.equal(a.absences.length, 0);
+  assert.equal(a.employeeRestNumbers["Charlie"], undefined);
 });
 test("diary prefill preserves comments and medical leave", () => {
   const a = fixture();
   a.absences = [
-    { name: "Ana", start: "2026-10-24", end: "2026-10-24", reason: "Atestado" },
+    { name: "Charlie", start: "2026-10-24", end: "2026-10-24", reason: "Atestado" },
   ];
   a.journals["2026-10-24"] = {
     rows: [
       {
-        name: "Ana",
+        name: "Charlie",
         team: "TM",
         status: "Presente",
         note: "Observação anterior",
       },
     ],
   };
-  const row = autoRows(a, "2026-10-24").find((r) => r.name === "Ana");
+  const row = autoRows(a, "2026-10-24").find((r) => r.name === "Charlie");
   assert.equal(row?.status, "Atestado");
   assert.equal(row?.note, "Observação anterior");
 });
 test("monthly days off keep absences in a separate count", () => {
   const a = fixture();
-  a.absences = [{ name: "Ana", start: "2026-10-24", end: "2026-10-25" }];
-  const row = offData(a, "2026-10", "TM").find((r) => r.name === "Ana")!;
+  a.absences = [{ name: "Charlie", start: "2026-10-24", end: "2026-10-25" }];
+  const row = offData(a, "2026-10", "TM").find((r) => r.name === "Charlie")!;
   assert.equal(row.daysOff + row.scheduled, 31);
   assert.equal(row.vacation, 2);
 });
 test("night shift respects titular and alternating substitute rules", () => {
   const a = fixture();
-  assert.equal(actingLeader(a, "TN", "2026-10-24"), "Charles");
+  assert.equal(actingLeader(a, "TN", "2026-10-24"), "Kilo");
   a.schedule = {
-    "2026-09-01": { TN: ["Rodiney", "Iorran"] },
-    "2026-09-02": { TN: ["Rodiney", "Iorran"] },
+    "2026-09-01": { TN: ["Lima", "Mike"] },
+    "2026-09-02": { TN: ["Lima", "Mike"] },
   };
-  assert.equal(actingLeader(a, "TN", "2026-09-01"), "Rodiney");
-  assert.equal(actingLeader(a, "TN", "2026-09-02"), "Iorran");
+  assert.equal(actingLeader(a, "TN", "2026-09-01"), "Lima");
+  assert.equal(actingLeader(a, "TN", "2026-09-02"), "Mike");
 });
 test("empty schedule has a safe empty state", () => {
   const a = fixture();
   a.schedule = {};
   assert.deepEqual(scheduleFor(a, "2026-10-24"), {});
   assert.equal(autoRows(a, "2026-10-24").length, 0);
+});
+test("workbook rest sequence repeats every eight days", () => {
+  assert.equal(restNumberForDate("2026-09-01"), 3);
+  assert.equal(restNumberForDate("2026-09-07"), 2);
+  assert.equal(restNumberForDate("2026-11-05"), 3);
+  assert.equal(restNumberForDate("2026-11-13"), 3);
+});
+test("changing an employee's rest number changes only future rotation days", () => {
+  const a = fixture();
+  a.schedule["2026-10-20"] = { TM: ["Alpha"] };
+  a.schedule["2026-10-24"] = { TM: ["Alpha"] };
+  a.schedule["2026-10-25"] = { TM: ["Alpha"] };
+  a.schedule["2026-10-26"] = { TM: ["Alpha"] };
+  a.schedule["2026-10-27"] = { TM: [] };
+
+  assignRestNumber(a, "TM", "Alpha", 2, "2026-10-24");
+
+  assert.deepEqual(a.schedule["2026-10-20"].TM, ["Alpha"]);
+  assert.ok(a.schedule["2026-10-24"].TM?.includes("Alpha"));
+  assert.ok(!a.schedule["2026-10-25"].TM?.includes("Alpha"));
+  assert.ok(!a.schedule["2026-10-26"].TM?.includes("Alpha"));
+  assert.ok(a.schedule["2026-10-27"].TM?.includes("Alpha"));
 });

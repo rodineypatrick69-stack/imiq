@@ -28,6 +28,9 @@ export interface Workspace {
   absences: Absence[];
   journals: Record<string, Journal>;
   employeeIds: Record<string, [string, string]>;
+  employeeRestNumbers?: Record<string, number>;
+  teamLeaders?: Partial<Record<Team, string[]>>;
+  leaderRotation?: Partial<Record<Team, string[]>>;
   sourceLastDate?: string;
   minimum?: number;
   [key: string]: unknown;

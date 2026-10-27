@@ -10,3 +10,11 @@
 - As cinco abas preservadas, com tabela mensal, CSV, histórico e backup.
 - Gravações sequenciais com proteção por revisão e recuperação de erros.
 - Build com verificação de tipos e testes antes do deploy automático.
+
+## 23 — 26/10/2026
+
+- Cadastro de número de folga por funcionário, com edição pelo supervisor.
+- Número de folga determina a rotação futura de trabalho e descanso, preservando o histórico.
+- Número de folga individual visível junto às pessoas em descanso no painel.
+- Título da pausa programada mostra o número do ciclo correspondente à data.
+- Remoção do funcionário também limpa seu número de folga cadastrado.

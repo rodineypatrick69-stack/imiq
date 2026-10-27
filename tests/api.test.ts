@@ -57,7 +57,10 @@ test("load sends publishable key and user token independently", async () => {
     assert.match(new Headers(opts?.headers).get("apikey")!, /^sb_publishable_/);
     return Response.json([{ state, revision: 7 }]);
   };
-  assert.equal((await loadWorkspace()).revision, 7);
+  const record = await loadWorkspace();
+  assert.equal(record.revision, 7);
+  assert.deepEqual(record.state.employeeRestNumbers, {});
+  assert.deepEqual(record.state.teamLeaders, {});
 });
 test("stale revision produces conflict instead of overwriting newer state", async () => {
   await authorize();

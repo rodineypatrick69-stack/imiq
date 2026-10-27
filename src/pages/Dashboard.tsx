@@ -24,6 +24,7 @@ import {
   MINIMUM,
   parse,
   restForTeam,
+  restNumberForDate,
   suggestionsFor,
   TEAM_LABELS,
   teamData,
@@ -330,12 +331,17 @@ export function Dashboard({
             </Button>
           </Panel>
           <Panel
-            title="Pausa programada"
+            title={`Pausa programada · Folga nº ${restNumberForDate(date)}`}
             subtitle="Pessoas de folga por equipe"
             action={<Coffee size={20} className="muted-icon" />}
           >
             {rests.map(({ team, people }) => (
-              <RestGroup key={team} team={team} people={people} />
+              <RestGroup
+                key={team}
+                team={team}
+                people={people}
+                restNumbers={data.employeeRestNumbers || {}}
+              />
             ))}
             <div className="rest-total">
               <span>Total de folga</span>
@@ -378,7 +384,15 @@ export function Dashboard({
     </>
   );
 }
-function RestGroup({ team, people }: { team: Team; people: string[] }) {
+function RestGroup({
+  team,
+  people,
+  restNumbers,
+}: {
+  team: Team;
+  people: string[];
+  restNumbers: Record<string, number>;
+}) {
   return (
     <div className="rest-group">
       <div>
@@ -386,7 +400,14 @@ function RestGroup({ team, people }: { team: Team; people: string[] }) {
         <small>{people.length}</small>
       </div>
       {people.length ? (
-        <p>{people.join(" · ")}</p>
+        <p className="rest-people">
+          {people.map((name) => (
+            <span className="rest-person" key={name}>
+              {name}
+              <b>Folga nº {restNumbers[name] ?? "—"}</b>
+            </span>
+          ))}
+        </p>
       ) : (
         <p className="muted">Nenhuma folga neste turno.</p>
       )}

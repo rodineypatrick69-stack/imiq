@@ -1,6 +1,6 @@
 # IMIQ — Controle pessoal
 
-Versão 22 · 24/10/2026. Aplicação de supervisão das equipes TM, TT e TN, com login, escalas, diário operacional, cadastro de funcionários, folgas e ausências.
+Versão 23 · 26/10/2026. Aplicação de supervisão das equipes TM, TT e TN, com login, escalas, diário operacional, cadastro de funcionários, folgas e ausências.
 
 ## Interface e arquitetura
 
@@ -8,7 +8,8 @@ Versão 22 · 24/10/2026. Aplicação de supervisão das equipes TM, TT e TN, co
 - Vite para desenvolvimento e build de produção; dependências fixadas e lockfile versionado.
 - Ícones Lucide e fonte Inter hospedada no próprio build.
 - Sistema visual roxo, preto, branco e laranja; menu lateral adaptável, tabelas com rolagem no celular, navegação por teclado e respeito a movimento reduzido.
-- Busca de funcionários por nome, registro ou número pessoal; cadastro e edição em formulários acessíveis.
+- Busca de funcionários por nome, registro ou número pessoal; cadastro e edição, incluindo o número de folga de cada pessoa.
+- O painel mostra o ciclo de folga do dia e o número individual de folga junto a cada funcionário que está descansando. O número define a rotação futura de trabalho e descanso.
 
 ## Dados e acesso
 

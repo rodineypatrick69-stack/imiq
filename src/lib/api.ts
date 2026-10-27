@@ -123,6 +123,9 @@ export function normalize(record: WorkspaceRecord): WorkspaceRecord {
     if (!Array.isArray(state.teams[team]))
       throw new Error("Cadastro de equipes inválido.");
   state.employeeIds ??= {};
+  state.employeeRestNumbers ??= {};
+  state.teamLeaders ??= {};
+  state.leaderRotation ??= {};
   state.journals ??= {};
   return { ...record, revision: Number(record.revision) };
 }

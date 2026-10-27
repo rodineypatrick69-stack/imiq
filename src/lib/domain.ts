@@ -5,11 +5,6 @@ export const TEAM_LABELS: Record<Team, string> = {
   TT: "Tarde",
   TN: "Noite",
 };
-export const LEADERS: Record<Team, string[]> = {
-  TM: ["Gleiton", "Agnaldo"],
-  TT: ["Rithielle", "David"],
-  TN: ["Charles"],
-};
 export const MINIMUM = 4;
 export const iso = (date = new Date()) =>
   new Date(date.getTime() - date.getTimezoneOffset() * 60000)
@@ -22,6 +17,40 @@ export const addDays = (date: string, days: number) => {
   next.setDate(next.getDate() + days);
   return iso(next);
 };
+export function restNumberForDate(date: string) {
+  // The shared workbook's eight-day calendar begins on 2026-09-01.
+  const sequence = [3, 3, 4, 4, 1, 1, 2, 2];
+  const days = Math.round((+parse(date) - +parse("2026-09-01")) / 86400000);
+  return sequence[((days % sequence.length) + sequence.length) % sequence.length];
+}
+export function assignRestNumber(
+  app: Workspace,
+  team: Team,
+  name: string,
+  number: number,
+  today = iso(),
+) {
+  app.employeeRestNumbers ??= {};
+  app.employeeRestNumbers[name] = number;
+  for (const [date, shifts] of Object.entries(app.schedule)) {
+    if (date < today) continue;
+    const scheduled = shifts[team] || [];
+    const onLeave = absFor(app, date).some((a) => samePerson(a.name, name));
+    const recordedAbsent = app.journals[date]?.rows.some(
+      (row) =>
+        row.team === team &&
+        samePerson(row.name, name) &&
+        ["Férias", "Atestado", "Falta"].includes(row.status),
+    );
+    const shouldWork =
+      restNumberForDate(date) !== number && !onLeave && !recordedAbsent;
+    shifts[team] = shouldWork
+      ? scheduled.some((n) => samePerson(n, name))
+        ? scheduled
+        : [...scheduled, name]
+      : scheduled.filter((n) => !samePerson(n, name));
+  }
+}
 export const initials = (name: string) =>
   name
     .trim()
@@ -95,13 +124,15 @@ export function actingLeader(
   date: string,
 ): string | null {
   const available = teamData(app, team, date).available;
+  const leaders = app.teamLeaders?.[team] || [];
   if (team !== "TN")
-    return (
-      LEADERS[team].find((n) => available.some((x) => samePerson(n, x))) || null
-    );
-  if (available.some((n) => samePerson(n, "Charles")))
-    return available.find((n) => samePerson(n, "Charles")) || null;
-  let next = "Rodiney";
+    return leaders.find((n) => available.some((x) => samePerson(n, x))) || null;
+  const titular = leaders[0];
+  if (titular && available.some((n) => samePerson(n, titular)))
+    return available.find((n) => samePerson(n, titular)) || null;
+  const rotation = app.leaderRotation?.TN || [];
+  if (!rotation.length) return null;
+  let next = rotation[0];
   const forward = date >= "2026-09-01",
     start = forward ? "2026-09-01" : date,
     end = forward ? date : "2026-09-01";
@@ -112,14 +143,15 @@ export function actingLeader(
   ) {
     const people =
       day === date ? available : teamData(app, "TN", day).available;
-    if (people.some((n) => samePerson(n, "Charles"))) continue;
-    const candidates = ["Rodiney", "Iorran"].filter((n) =>
+    if (titular && people.some((n) => samePerson(n, titular))) continue;
+    const candidates = rotation.filter((n) =>
       people.some((p) => samePerson(p, n)),
     );
     if (!candidates.length) continue;
     const pick = candidates.includes(next) ? next : candidates[0];
     if (forward && day === date) return pick;
-    next = pick === "Rodiney" ? "Iorran" : "Rodiney";
+    const index = rotation.findIndex((n) => samePerson(n, pick));
+    next = rotation[(index + 1) % rotation.length];
   }
   return forward ? null : next;
 }
@@ -134,7 +166,7 @@ export function isLeader(
     return !!leader && samePerson(leader, name);
   }
   return (
-    LEADERS[team].some((n) => samePerson(n, name)) &&
+    (app.teamLeaders?.[team] || []).some((n) => samePerson(n, name)) &&
     app.teams[team].some((n) => samePerson(n, name))
   );
 }
@@ -261,6 +293,7 @@ export function removePerson(
   today = iso(),
 ) {
   app.teams[team] = app.teams[team].filter((n) => n !== name);
+  delete app.employeeRestNumbers?.[name];
   for (const [date, shifts] of Object.entries(app.schedule))
     if (date >= today && shifts[team])
       shifts[team] = shifts[team]!.filter((n) => !samePerson(n, name));

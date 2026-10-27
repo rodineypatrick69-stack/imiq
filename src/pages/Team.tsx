@@ -11,9 +11,9 @@ import {
 import type { Team as TeamId, Workspace, UpdateWorkspace } from "../lib/types";
 import {
   downloadFile,
+  assignRestNumber,
   initials,
   iso,
-  LEADERS,
   movePerson,
   removePerson,
   samePerson,
@@ -40,6 +40,7 @@ export function TeamPage({
   const [name, setName] = useState(""),
     [registration, setRegistration] = useState(""),
     [personal, setPersonal] = useState(""),
+    [restNumber, setRestNumber] = useState(""),
     [team, setTeam] = useState<TeamId>("TM"),
     [error, setError] = useState("");
   const all = TEAMS.flatMap((team) =>
@@ -60,6 +61,11 @@ export function TeamPage({
     const ids = person ? data.employeeIds[person.name] : undefined;
     setRegistration(ids?.[0] || "");
     setPersonal(ids?.[1] || "");
+    setRestNumber(
+      person && data.employeeRestNumbers?.[person.name]
+        ? String(data.employeeRestNumbers[person.name])
+        : "",
+    );
     setError("");
     setModal(type);
   }
@@ -78,13 +84,29 @@ export function TeamPage({
       setError("Selecione um turno diferente.");
       return;
     }
+    if (
+      (modal === "add" || modal === "edit") &&
+      !["1", "2", "3", "4"].includes(restNumber)
+    ) {
+      setError("Selecione o número de folga do funcionário.");
+      return;
+    }
     update((d) => {
       if (modal === "add") {
         d.teams[team].push(name.trim());
         d.employeeIds[name.trim()] = [registration.trim(), personal.trim()];
+        assignRestNumber(d, team, name.trim(), Number(restNumber));
       }
-      if (modal === "edit" && selected)
+      if (modal === "edit" && selected) {
         d.employeeIds[selected.name] = [registration.trim(), personal.trim()];
+        if (d.employeeRestNumbers?.[selected.name] !== Number(restNumber))
+          assignRestNumber(
+            d,
+            selected.team,
+            selected.name,
+            Number(restNumber),
+          );
+      }
       if (modal === "move" && selected)
         movePerson(d, selected.team, selected.name, team);
       if (modal === "remove" && selected)
@@ -168,6 +190,7 @@ export function TeamPage({
                 <th>Equipe</th>
                 <th>Registro</th>
                 <th>Número pessoal</th>
+                <th>Folga nº</th>
                 <th className="align-right">Ações</th>
               </tr>
             </thead>
@@ -179,7 +202,7 @@ export function TeamPage({
                       <span className="avatar">{initials(name)}</span>
                       <div>
                         <strong>{name}</strong>
-                        {LEADERS[team].some((n) => samePerson(n, name)) && (
+                        {(data.teamLeaders?.[team] || []).some((n) => samePerson(n, name)) && (
                           <small>Líder de equipe</small>
                         )}
                       </div>
@@ -201,12 +224,19 @@ export function TeamPage({
                     )}
                   </td>
                   <td>
+                    {data.employeeRestNumbers?.[name] ? (
+                      <Badge tone="purple">Nº {data.employeeRestNumbers[name]}</Badge>
+                    ) : (
+                      <span className="missing">Definir</span>
+                    )}
+                  </td>
+                  <td>
                     <div className="row-actions">
                       <Button
                         variant="ghost"
                         onClick={() => open("edit", { name, team })}
                         aria-label={`Editar ${name}`}
-                        title="Editar identificações"
+                        title="Editar cadastro e número de folga"
                       >
                         <Pencil size={16} />
                       </Button>
@@ -244,8 +274,8 @@ export function TeamPage({
         </div>
       </Panel>
       <div className="info-note">
-        Mudanças de turno atualizam a escala e os diários a partir de hoje.
-        Novos cadastros não são adicionados automaticamente à escala existente.
+        O número de folga organiza automaticamente o ciclo futuro de cada
+        funcionário. Mudanças de turno também atualizam a escala a partir de hoje.
       </div>
       {modal && (
         <Modal
@@ -253,7 +283,7 @@ export function TeamPage({
             modal === "add"
               ? "Novo funcionário"
               : modal === "edit"
-                ? "Identificações do funcionário"
+                ? "Editar funcionário"
                 : modal === "move"
                   ? "Transferir de turno"
                   : "Remover funcionário"
@@ -278,24 +308,40 @@ export function TeamPage({
                   />
                 </Field>
                 {(modal === "add" || modal === "edit") && (
-                  <div className="form-grid">
-                    <Field label="Registro">
-                      <input
+                  <>
+                    <div className="form-grid">
+                      <Field label="Registro">
+                        <input
+                          required
+                          inputMode="numeric"
+                          value={registration}
+                          onChange={(e) => setRegistration(e.target.value)}
+                        />
+                      </Field>
+                      <Field label="Número pessoal">
+                        <input
+                          required
+                          inputMode="numeric"
+                          value={personal}
+                          onChange={(e) => setPersonal(e.target.value)}
+                        />
+                      </Field>
+                    </div>
+                    <Field label="Número de folga">
+                      <select
                         required
-                        inputMode="numeric"
-                        value={registration}
-                        onChange={(e) => setRegistration(e.target.value)}
-                      />
+                        value={restNumber}
+                        onChange={(e) => setRestNumber(e.target.value)}
+                      >
+                        <option value="">Selecione o número</option>
+                        {[1, 2, 3, 4].map((n) => (
+                          <option key={n} value={n}>
+                            Folga nº {n}
+                          </option>
+                        ))}
+                      </select>
                     </Field>
-                    <Field label="Número pessoal">
-                      <input
-                        required
-                        inputMode="numeric"
-                        value={personal}
-                        onChange={(e) => setPersonal(e.target.value)}
-                      />
-                    </Field>
-                  </div>
+                  </>
                 )}
                 {(modal === "add" || modal === "move") && (
                   <Field label={modal === "move" ? "Novo turno" : "Equipe"}>
