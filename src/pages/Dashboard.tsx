@@ -23,7 +23,7 @@ import {
   isLeader,
   MINIMUM,
   parse,
-  restForTeam,
+  restForNumber,
   restNumberForDate,
   suggestionsFor,
   TEAM_LABELS,
@@ -48,7 +48,7 @@ export function Dashboard({
     absences = absFor(data, date),
     rests = TEAMS.map((team) => ({
       team,
-      people: restForTeam(data, team, date),
+      people: restForNumber(data, team, date),
     }));
   const available = teams.reduce((n, t) => n + t.available.length, 0),
     restTotal = rests.reduce((n, t) => n + t.people.length, 0),

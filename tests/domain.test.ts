@@ -5,6 +5,7 @@ import {
   movePerson,
   removePerson,
   restForTeam,
+  restForNumber,
   teamData,
   suggestionsFor,
   offData,
@@ -136,6 +137,16 @@ test("workbook rest sequence repeats every eight days", () => {
   assert.equal(restNumberForDate("2026-09-07"), 2);
   assert.equal(restNumberForDate("2026-11-05"), 3);
   assert.equal(restNumberForDate("2026-11-13"), 3);
+});
+test("dashboard pause list includes only the matching rest-number group", () => {
+  const a = fixture();
+  a.teams.TM = ["Alpha", "Charlie", "Delta", "Echo", "Foxtrot", "Golf"];
+  a.employeeRestNumbers = { Alpha: 3, Charlie: 2 };
+  a.schedule["2026-09-01"] = {
+    TM: ["Delta", "Echo", "Foxtrot", "Golf"],
+  };
+
+  assert.deepEqual(restForNumber(a, "TM", "2026-09-01"), ["Alpha"]);
 });
 test("changing an employee's rest number changes only future rotation days", () => {
   const a = fixture();

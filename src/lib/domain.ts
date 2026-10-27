@@ -118,6 +118,12 @@ export function restForTeam(app: Workspace, team: Team, date: string) {
       ),
   );
 }
+export function restForNumber(app: Workspace, team: Team, date: string) {
+  const number = restNumberForDate(date);
+  return restForTeam(app, team, date).filter(
+    (name) => app.employeeRestNumbers?.[name] === number,
+  );
+}
 export function actingLeader(
   app: Workspace,
   team: Team,

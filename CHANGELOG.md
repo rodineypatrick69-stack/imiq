@@ -18,3 +18,8 @@
 - Número de folga individual visível junto às pessoas em descanso no painel.
 - Título da pausa programada mostra o número do ciclo correspondente à data.
 - Remoção do funcionário também limpa seu número de folga cadastrado.
+
+## 24 — 27/10/2026
+
+- A pausa programada exibe somente funcionários do número de folga correspondente ao dia.
+- O total de pessoas de folga no painel usa o mesmo filtro do ciclo diário.

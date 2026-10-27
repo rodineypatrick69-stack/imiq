@@ -1,6 +1,6 @@
 {
   "name": "imiq",
-  "version": "23.0.0",
+  "version": "24.0.0",
   "description": "Painel responsivo de equipes TM, TT e TN. O estado compartilhado (equipe, escalas, folgas, ausências e diários) é persistido no Supabase independente `imiq`; não usa o projeto HPE.",
   "scripts": {
     "dev": "vite --host 0.0.0.0",

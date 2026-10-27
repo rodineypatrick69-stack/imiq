@@ -197,8 +197,8 @@ export default function App() {
           </button>
         </div>
         <div className="sidebar-bottom">
-          <span className="version-label">v23</span>
-          <span>Atualizado em 26/10/2026</span>
+          <span className="version-label">v24</span>
+          <span>Atualizado em 27/10/2026</span>
         </div>
       </aside>
       <div className="app-body">
@@ -404,7 +404,7 @@ export default function App() {
               <b>IMIQ.</b> Controle pessoal
             </span>
             <span>
-              {cloud.message} <span className="footer-dot">·</span> Versão 23
+              {cloud.message} <span className="footer-dot">·</span> Versão 24
             </span>
           </footer>
         </main>
@@ -436,7 +436,7 @@ export default function App() {
             conexão, use Backup para guardar uma cópia.
           </p>
           <div className="release-note">
-            <Badge>Versão 23</Badge>
+            <Badge>Versão 24</Badge>
             <p>
               Cadastro de funcionários com número de folga editável, painel
               atualizado e navegação responsiva.
